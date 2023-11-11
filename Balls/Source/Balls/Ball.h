@@ -10,23 +10,28 @@ UCLASS()
 class BALLS_API ABall : public AActor
 {
     GENERATED_BODY()
-    
-public:	
-    // Sets default values for this actor's properties
-    ABall();
-
-protected:
-    // Called when the game starts or when spawned
-    virtual void BeginPlay() override;
-
-public:	
-    // Called every frame
-    virtual void Tick(float DeltaTime) override;
-
-    UFUNCTION()
-    void OnHitCallback(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 public:
+
+    ABall();
+
+public:
+
+    virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type endPlayReason) override;
+    virtual void Tick(float deltaTime) override;
+
+protected:
+
+    UFUNCTION()
+    void OnHitCallback(UPrimitiveComponent* hitComp, AActor* otherActor, UPrimitiveComponent* otherComp, FVector normalImpulse, const FHitResult& hit);
+
+    void StartSpawnCooldownTimer();
+
+    void BindToHitEvents();
+
+public:
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Balls")
     class UStaticMeshComponent* RootMeshComponent;
 
@@ -34,9 +39,15 @@ public:
     TSubclassOf<AActor> ActorClassToSpawnOnImpact;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Balls")
-    float SpawnCircleRadius = 100.f;
+    float SpawnCircleRadius = 500.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Balls")
     uint8 SpawnCount = 1;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Balls")
+    uint8 SpawnCooldownSeconds = 3.f;
+
+protected:
+
+    FTimerHandle SpawnCooldownTimer;
 };

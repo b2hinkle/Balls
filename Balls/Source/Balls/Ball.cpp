@@ -17,25 +17,36 @@ ABall::ABall()
 void ABall::BeginPlay()
 {
     Super::BeginPlay();
-    
-    RootMeshComponent->OnComponentHit.AddDynamic(this, &ABall::OnHitCallback);
+
+    BindToHitEvents();
 }
 
-void ABall::Tick(float DeltaTime)
+void ABall::EndPlay(const EEndPlayReason::Type endPlayReason)
 {
-    Super::Tick(DeltaTime);
+    Super::EndPlay(endPlayReason);
 
+    RootMeshComponent->OnComponentHit.RemoveAll(this);
 }
 
-void ABall::OnHitCallback(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void ABall::Tick(float deltaTime)
 {
+    Super::Tick(deltaTime);
+}
+
+void ABall::OnHitCallback(UPrimitiveComponent* hitComp, AActor* otherActor, UPrimitiveComponent* otherComp, FVector normalImpulse, const FHitResult& hit)
+{
+    if (otherActor->IsA<ThisClass>())
+    {
+        return;
+    }
+
     FActorSpawnParameters spawnParams;
     spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
     const float dividedAngle = (2 * UE_PI) / SpawnCount;
 
-    const FVector& circleUpVector = Hit.ImpactNormal;
-    const FVector& circleLocation = Hit.ImpactPoint;
+    const FVector& circleUpVector = hit.ImpactNormal;
+    const FVector& circleLocation = hit.ImpactPoint;
 
     const FVector& circleForwardVector = FRotationMatrix::MakeFromZ(circleUpVector).GetUnitAxis(EAxis::X);
 
@@ -48,5 +59,33 @@ void ABall::OnHitCallback(UPrimitiveComponent* HitComp, AActor* OtherActor, UPri
         const FVector& indexSpawnLocation = circleLocation + (indexForwardVector * SpawnCircleRadius);
 
         GetWorld()->SpawnActor<AActor>(ActorClassToSpawnOnImpact, indexSpawnLocation, FRotator::ZeroRotator, spawnParams);
+    }
+
+    StartSpawnCooldownTimer();
+
+    RootMeshComponent->OnComponentHit.RemoveAll(this);
+
+#if 0 // Uncomment if we know it's not expensive to frequently change this.
+    RootMeshComponent->SetNotifyRigidBodyCollision(false);
+#endif // 0
+}
+
+void ABall::StartSpawnCooldownTimer()
+{
+    GetWorld()->GetTimerManager().SetTimer(
+        SpawnCooldownTimer,
+        FTimerDelegate::CreateUObject(this, &ThisClass::BindToHitEvents),
+        SpawnCooldownSeconds,
+        false);
+}
+
+void ABall::BindToHitEvents()
+{
+    if (RootMeshComponent->OnComponentHit.IsAlreadyBound(this, &ABall::OnHitCallback) == false)
+    {
+#if 0 // Uncomment if we know it's not expensive to frequently change this.
+        RootMeshComponent->SetNotifyRigidBodyCollision(true);
+#endif // 0
+        RootMeshComponent->OnComponentHit.AddDynamic(this, &ABall::OnHitCallback);
     }
 }
