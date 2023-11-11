@@ -18,7 +18,7 @@ void ABall::BeginPlay()
 {
     Super::BeginPlay();
 
-    BindToHitEvents();
+    StartSpawnCooldownTimer();
 }
 
 void ABall::EndPlay(const EEndPlayReason::Type endPlayReason)
@@ -46,7 +46,7 @@ void ABall::OnHitCallback(UPrimitiveComponent* hitComp, AActor* otherActor, UPri
     const float dividedAngle = (2 * UE_PI) / SpawnCount;
 
     const FVector& circleUpVector = hit.ImpactNormal;
-    const FVector& circleLocation = hit.ImpactPoint;
+    const FVector& circleLocation = GetActorLocation();
 
     const FVector& circleForwardVector = FRotationMatrix::MakeFromZ(circleUpVector).GetUnitAxis(EAxis::X);
 
