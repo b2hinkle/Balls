@@ -45,7 +45,7 @@ public:
     uint8 SpawnCount = 1;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Balls")
-    uint8 SpawnCooldownSeconds = 3.f;
+    float SpawnCooldownSeconds = .25f;
 
 protected:
 
